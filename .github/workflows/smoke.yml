@@ -1,16 +1,17 @@
 name: Smoke
 
 # Corre la prueba de humo contra el sitio desplegado:
-# - automáticamente cuando Vercel termina un despliegue a producción con éxito;
+# - automáticamente cuando Vercel marca como correcto el despliegue de un commit que está en main
+#   (Vercel publica un estado de commit "Vercel" = success; no crea Deployments de GitHub,
+#   por eso no se usa deployment_status);
 # - a mano desde Actions > Smoke > Run workflow (por ejemplo contra un preview).
-# Nota: los workflows de deployment_status se toman de la rama por defecto (main).
 on:
-  deployment_status:
+  status:
   workflow_dispatch:
     inputs:
       url:
-        description: URL del sitio a probar (https://...)
-        required: true
+        description: URL del sitio a probar (https://...). Vacío = producción
+        required: false
       expect_mode:
         description: Modo de almacenamiento esperado
         type: choice
@@ -20,12 +21,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: smoke
+  cancel-in-progress: false
+
 jobs:
   smoke:
     name: Prueba de humo
+    # En `status`, github.sha es el commit del propio estado (no el de main), así que se filtra por las ramas que
+    # contienen ese commit: los previews de PR (rama de feature) se omiten y solo se prueba el despliegue de main.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.deployment_status.state == 'success' && github.event.deployment_status.environment == 'Production')
+      (github.event.state == 'success' && github.event.context == 'Vercel' && contains(github.event.branches.*.name, 'main'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -34,8 +41,9 @@ jobs:
         with:
           node-version: 22
       - name: Ejecutar prueba de humo
-        # La URL llega por variable de entorno (no interpolada en el script) para evitar inyección de comandos.
+        # Variables de entorno (no interpoladas en el script) para evitar inyección de comandos.
+        # URL de producción: variable del repositorio SMOKE_URL o, por defecto, el dominio actual del proyecto.
         env:
-          SMOKE_URL: ${{ inputs.url || github.event.deployment_status.environment_url }}
+          SMOKE_URL: ${{ inputs.url || vars.SMOKE_URL || 'https://plugin-gamma-mauve.vercel.app' }}
           EXPECT_MODE: ${{ inputs.expect_mode || 'supabase' }}
         run: node scripts/smoke.js "$SMOKE_URL" --expect-mode "$EXPECT_MODE"
