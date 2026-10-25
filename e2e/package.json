@@ -1,0 +1,14 @@
+{
+  "name": "plugin-sandbox-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pruebas E2E y de accesibilidad del Muro de notas (Playwright + axe-core)",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.63.0"
+  }
+}

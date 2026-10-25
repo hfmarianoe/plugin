@@ -19,3 +19,16 @@ Importa el repo en Vercel (sin framework). `vercel.json` ya apunta a `public/`. 
 
 ### Pruebas de la base de datos
 `supabase/tests/notes.test.sql` prueba RLS, restricciones `check` y el trigger de tope (30 notas por minuto). Pégalo completo en el SQL Editor de Supabase. Corre en una transacción que siempre se revierte, así que no deja datos. El mensaje del error final empieza con `PASS: N pruebas` o `FAIL: X de N pruebas: ...`. Cualquier otro error significa que el propio script falló.
+
+### Pruebas E2E y de accesibilidad
+Viven en `e2e/` con sus propias dependencias (Playwright y axe-core), para que el despliegue en Vercel no instale nada extra.
+```
+cd e2e
+npm ci
+npx playwright install chromium   # solo la primera vez
+npx playwright test
+```
+`e2e/server.js` sirve `public/` y ejecuta el handler real de `api/notes.js` en modo memoria; los errores del servidor (429, 400, 500) se simulan con `page.route`. Las pruebas cubren el flujo de publicar, teclado y foco, errores, seguridad (HTML escapado y honeypot), diseño a 320/390/768 px y axe-core WCAG 2.1 A/AA en tema claro y oscuro.
+
+### CI
+`.github/workflows/ci.yml` corre en cada PR y en cada push a `main`: las pruebas del API con umbral de cobertura (`npm run test:coverage`) y las pruebas E2E con Playwright. Si falla E2E se sube el reporte como artefacto.
