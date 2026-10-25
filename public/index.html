@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Muro de notas</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --card:#fff; --muted:#6b6b66; --accent:#3b5bdb; --line:#e4e4de; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16161a; --fg:#ececea; --card:#1f1f25; --muted:#9a9a94; --accent:#7b93ff; --line:#2e2e36; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui, sans-serif; }
+  main { max-width:640px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { margin:0 0 4px; font-size:1.6rem; }
+  .sub { color:var(--muted); margin:0 0 24px; font-size:.9rem; }
+  form { display:grid; gap:8px; margin-bottom:24px; }
+  input, textarea, button { font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--fg); }
+  button { background:var(--accent); color:#fff; border:0; cursor:pointer; font-weight:600; }
+  button:disabled { opacity:.6; cursor:wait; }
+  .note { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; }
+  .note b { font-size:.9rem; } .note small { color:var(--muted); margin-left:6px; }
+  .note p { margin:4px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+  #err { color:#c92a2a; min-height:1.2em; font-size:.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Muro de notas</h1>
+  <p class="sub">Sandbox para probar plugins y skills · almacenamiento: <span id="mode">…</span></p>
+  <form id="f">
+    <input name="author" placeholder="Tu nombre (opcional)" maxlength="40">
+    <textarea name="body" placeholder="Escribe una nota…" maxlength="280" rows="3" required></textarea>
+    <button>Publicar</button>
+    <div id="err" role="alert"></div>
+  </form>
+  <section id="list"></section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (t) => t.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function load() {
+  const r = await fetch('/api/notes');
+  const data = await r.json();
+  if (!r.ok) { $('#err').textContent = data.error; return; }
+  $('#mode').textContent = data.mode === 'supabase' ? 'Supabase (Postgres)' : 'memoria (demo, se reinicia)';
+  $('#list').innerHTML = data.notes.length
+    ? data.notes.map((n) => `<article class="note"><b>${esc(n.author)}</b><small>${new Date(n.created_at).toLocaleString()}</small><p>${esc(n.body)}</p></article>`).join('')
+    : '<p class="sub">Aún no hay notas. ¡Escribe la primera!</p>';
+}
+
+$('#f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button'); btn.disabled = true; $('#err').textContent = '';
+  const r = await fetch('/api/notes', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
+  btn.disabled = false;
+  if (!r.ok) { $('#err').textContent = (await r.json()).error; return; }
+  e.target.body.value = '';
+  load();
+});
+load();
+</script>
+</body>
+</html>

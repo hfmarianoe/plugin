@@ -1,0 +1,7 @@
+{
+  "name": "plugin-sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Muro de notas: sandbox para probar plugins y skills",
+  "scripts": { "dev": "vercel dev" }
+}
