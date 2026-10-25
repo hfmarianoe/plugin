@@ -60,3 +60,11 @@ test('método no permitido devuelve 405 con Allow', async () => {
   assert.strictEqual(r.code, 405);
   assert.strictEqual(r.headers.Allow, 'GET, POST');
 });
+
+test('honeypot lleno responde 201 sin guardar la nota', async () => {
+  const antes = (await call({ method: 'GET' })).body.notes.length;
+  const r = await call({ method: 'POST', body: { body: 'spam', hp_check: 'http://spam' } });
+  assert.strictEqual(r.code, 201);
+  const despues = (await call({ method: 'GET' })).body.notes.length;
+  assert.strictEqual(despues, antes);
+});

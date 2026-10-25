@@ -26,7 +26,11 @@ async function sb(path, options = {}) {
       ...options.headers,
     },
   });
-  if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    const err = new Error(`Supabase ${res.status}: ${await res.text()}`);
+    err.status = res.status;
+    throw err;
+  }
   return res.status === 204 ? null : res.json();
 }
 
@@ -68,17 +72,25 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
       const body = parseBody(req);
+      // Honeypot: real users never see this field, so a filled value means a bot. Pretend success.
+      if (typeof body.hp_check === 'string' && body.hp_check.trim()) return res.status(201).json({ ok: true });
       const author = clean(body.author, 40, 'anónimo');
       const text = clean(body.body, 280);
       if (!text) throw new HttpError(400, 'La nota no puede estar vacía');
 
       if (useDb) {
-        const [row] = await sb('notes', {
-          method: 'POST',
-          headers: { Prefer: 'return=representation' },
-          body: JSON.stringify({ author, body: text }),
-        });
-        return res.status(201).json(row);
+        try {
+          const [row] = await sb('notes', {
+            method: 'POST',
+            headers: { Prefer: 'return=representation' },
+            body: JSON.stringify({ author, body: text }),
+          });
+          return res.status(201).json(row);
+        } catch (err) {
+          // The notes_rate_limit trigger in Postgres rejects floods with HTTP 429.
+          if (err.status === 429) throw new HttpError(429, 'Demasiadas notas, intenta de nuevo en un minuto');
+          throw err;
+        }
       }
       const row = { id: nextId++, author, body: text, created_at: new Date().toISOString() };
       memory.push(row);
