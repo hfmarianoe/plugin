@@ -1,0 +1,16 @@
+# Mantiene al día las acciones de GitHub fijadas por hash en .github/workflows.
+# Dependabot cambia el hash y el comentario de versión (# v7.0.1) a la vez.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Un solo PR con todas las acciones que tengan versión nueva, para no llenar el repositorio de PRs.
+    groups:
+      acciones:
+        patterns: ["*"]
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "CI"

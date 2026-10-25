@@ -33,7 +33,9 @@ npx playwright test
 ### CI
 `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`: las pruebas del API con umbral de cobertura (`npm run test:coverage`) y las pruebas E2E con Playwright. Si falla E2E se sube el reporte como artefacto.
 
-Las acciones de GitHub están fijadas por hash de commit (con la versión como comentario), no por etiqueta: una etiqueta como `@v7` puede moverse, un hash no. Para actualizar una, busca el commit de la versión nueva y cambia hash y comentario a la vez:
+Las acciones de GitHub están fijadas por hash de commit (con la versión como comentario), no por etiqueta: una etiqueta como `@v7` puede moverse, un hash no. `.github/dependabot.yml` revisa cada lunes si hay versiones nuevas y abre **un solo PR** con todas las acciones que se puedan actualizar (cambia el hash y el comentario de versión a la vez). Ese PR pasa por el mismo CI que los demás: revisa el resultado antes de fusionarlo.
+
+Para actualizar una a mano, busca el commit de la versión nueva y cambia hash y comentario a la vez:
 ```
 git ls-remote --tags https://github.com/actions/checkout.git 'refs/tags/v7*'
 ```
