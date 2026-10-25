@@ -2,17 +2,27 @@
 const { SUPABASE_URL } = process.env;
 const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const useDb = Boolean(SUPABASE_URL && SUPABASE_KEY);
+const isProduction = process.env.VERCEL_ENV === 'production';
 
+const MAX_MEMORY_NOTES = 200;
 const memory = [];
+let nextId = 1;
+
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
 
 async function sb(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...options,
+    signal: AbortSignal.timeout(5000),
     headers: {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=representation',
       ...options.headers,
     },
   });
@@ -20,8 +30,35 @@ async function sb(path, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
+// Trims and cuts by code points so an emoji is never split in half.
+function clean(value, max, fallback = '') {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value !== 'string') throw new HttpError(400, 'Los campos deben ser texto');
+  return Array.from(value.trim()).slice(0, max).join('') || fallback;
+}
+
+function parseBody(req) {
+  if (!String(req.headers?.['content-type'] || '').includes('application/json')) {
+    throw new HttpError(415, 'Content-Type debe ser application/json');
+  }
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body || '{}');
+    } catch {
+      throw new HttpError(400, 'JSON inválido');
+    }
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new HttpError(400, 'Cuerpo inválido');
+  }
+  return body;
+}
+
 module.exports = async (req, res) => {
   try {
+    if (isProduction && !useDb) throw new Error('Base de datos no configurada');
+
     if (req.method === 'GET') {
       const notes = useDb
         ? await sb('notes?select=id,author,body,created_at&order=created_at.desc&limit=50')
@@ -30,23 +67,30 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'POST') {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
-      const author = String(body.author || 'anónimo').trim().slice(0, 40) || 'anónimo';
-      const text = String(body.body || '').trim().slice(0, 280);
-      if (!text) return res.status(400).json({ error: 'La nota no puede estar vacía' });
+      const body = parseBody(req);
+      const author = clean(body.author, 40, 'anónimo');
+      const text = clean(body.body, 280);
+      if (!text) throw new HttpError(400, 'La nota no puede estar vacía');
 
       if (useDb) {
-        const [row] = await sb('notes', { method: 'POST', body: JSON.stringify({ author, body: text }) });
+        const [row] = await sb('notes', {
+          method: 'POST',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify({ author, body: text }),
+        });
         return res.status(201).json(row);
       }
-      const row = { id: memory.length + 1, author, body: text, created_at: new Date().toISOString() };
+      const row = { id: nextId++, author, body: text, created_at: new Date().toISOString() };
       memory.push(row);
+      if (memory.length > MAX_MEMORY_NOTES) memory.shift();
       return res.status(201).json(row);
     }
 
     res.setHeader('Allow', 'GET, POST');
-    return res.status(405).json({ error: 'Método no permitido' });
+    throw new HttpError(405, 'Método no permitido');
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
