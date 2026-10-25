@@ -1,6 +1,7 @@
 // Serverless function (Vercel). Uses Supabase REST when configured, otherwise in-memory (demo mode).
-const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
-const useDb = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+const { SUPABASE_URL } = process.env;
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const useDb = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 const memory = [];
 
@@ -8,8 +9,8 @@ async function sb(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...options,
     headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
       ...options.headers,

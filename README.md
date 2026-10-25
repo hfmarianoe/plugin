@@ -7,7 +7,7 @@ Sin variables de entorno funciona con memoria (se reinicia entre invocaciones). 
 
 ## Con base de datos (Supabase)
 1. Crea un proyecto en Supabase y ejecuta `supabase/schema.sql` en el SQL editor.
-2. En Vercel define las variables `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (solo servidor; nunca en el frontend).
+2. En Vercel define las variables `SUPABASE_URL` y `SUPABASE_KEY` (clave publishable; también acepta `SUPABASE_SERVICE_ROLE_KEY`).
 
 ## Despliegue
 Importa el repo en Vercel (sin framework). `vercel.json` ya apunta a `public/`. Local: `npx vercel dev`.

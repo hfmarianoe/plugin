@@ -5,5 +5,8 @@ create table if not exists public.notes (
   created_at timestamptz not null default now()
 );
 
--- Solo el backend (service role) accede; el navegador nunca toca la tabla.
 alter table public.notes enable row level security;
+
+-- Con la clave pública (publishable) solo se puede leer y crear; no editar ni borrar.
+create policy "notes_read"   on public.notes for select to anon using (true);
+create policy "notes_insert" on public.notes for insert to anon with check (true);
