@@ -16,3 +16,6 @@ Importa el repo en Vercel (sin framework). `vercel.json` ya apunta a `public/`. 
 - `npm test`: suite de `node:test` (API en modo memoria, con Supabase simulado y en producción).
 - `npm run test:coverage`: igual, pero falla si `api/notes.js` baja de 95 % de líneas o 90 % de ramas.
 - Los helpers para llamar al handler están en `testing/` (fuera de `test/` porque `node --test` ejecuta todo lo que haya en `test/`).
+
+### Pruebas de la base de datos
+`supabase/tests/notes.test.sql` prueba RLS, restricciones `check` y el trigger de tope (30 notas por minuto). Pégalo completo en el SQL Editor de Supabase. Corre en una transacción que siempre se revierte, así que no deja datos. El mensaje del error final empieza con `PASS: N pruebas` o `FAIL: X de N pruebas: ...`. Cualquier otro error significa que el propio script falló.
