@@ -98,9 +98,10 @@ begin
     pg_temp.sql_state('anon', format('insert into public.notes (body) values (%L)', repeat('😀', 280))) is null);
 
   ----------------------------------------------------------------- Trigger de tope por minuto
-  perform pg_temp.t('existe el trigger notes_rate_limit en notes',
+  perform pg_temp.t('existe el trigger notes_rate_limit en notes y está activo',
     exists (select 1 from pg_trigger
-             where tgrelid = 'public.notes'::regclass and tgname = 'notes_rate_limit' and not tgisinternal));
+             where tgrelid = 'public.notes'::regclass and tgname = 'notes_rate_limit'
+               and not tgisinternal and tgenabled = 'O'));
 
   perform pg_temp.t('la función del trigger es security definer con search_path fijo',
     (select prosecdef and coalesce(proconfig::text like '%search_path=public%', false)
