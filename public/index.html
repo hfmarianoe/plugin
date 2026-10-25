@@ -21,6 +21,7 @@
   .note { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; }
   .note b { font-size:.9rem; } .note small { color:var(--muted); margin-left:6px; }
   .note p { margin:4px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .hp { position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
   #err { color:#c92a2a; min-height:1.2em; font-size:.9rem; }
 </style>
 </head>
@@ -31,6 +32,7 @@
   <form id="f">
     <input name="author" placeholder="Tu nombre (opcional)" maxlength="40">
     <textarea name="body" placeholder="Escribe una nota…" maxlength="280" rows="3" required></textarea>
+    <input name="hp_check" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
     <button>Publicar</button>
     <div id="err" role="alert"></div>
   </form>
