@@ -32,3 +32,14 @@ npx playwright test
 
 ### CI
 `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`: las pruebas del API con umbral de cobertura (`npm run test:coverage`) y las pruebas E2E con Playwright. Si falla E2E se sube el reporte como artefacto.
+
+### Prueba de humo (después del despliegue)
+`scripts/smoke.js` comprueba un sitio desplegado sin dejar notas reales: carga de la página, lectura de la API en el modo esperado (`supabase` en producción), ordenamiento y forma de las notas, tiempo de respuesta, rechazo de POST sin JSON (415) y de notas vacías (400), descarte de bots por honeypot (verificando que no se guardó) y 405 con `Allow`. Reintenta ante errores de red y 502/503/504, y avisa si el sitio está protegido por Vercel Authentication.
+
+```
+node scripts/smoke.js https://tu-sitio.vercel.app                  # espera modo supabase
+node scripts/smoke.js http://127.0.0.1:3100 --expect-mode memory   # contra el servidor local de e2e/
+```
+Opciones: `--expect-mode supabase|memory`, `--timeout ms` (10000), `--retries n` (2). Sale con código 1 si algo falla.
+
+`.github/workflows/smoke.yml` lo ejecuta solo cuando Vercel termina un despliegue a **producción** con éxito, y también a mano desde Actions > Smoke > Run workflow con la URL que quieras (útil para un preview, si no está protegido).

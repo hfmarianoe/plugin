@@ -1,0 +1,41 @@
+name: Smoke
+
+# Corre la prueba de humo contra el sitio desplegado:
+# - automáticamente cuando Vercel termina un despliegue a producción con éxito;
+# - a mano desde Actions > Smoke > Run workflow (por ejemplo contra un preview).
+# Nota: los workflows de deployment_status se toman de la rama por defecto (main).
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: URL del sitio a probar (https://...)
+        required: true
+      expect_mode:
+        description: Modo de almacenamiento esperado
+        type: choice
+        options: [supabase, memory]
+        default: supabase
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Prueba de humo
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' && github.event.deployment_status.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ejecutar prueba de humo
+        # La URL llega por variable de entorno (no interpolada en el script) para evitar inyección de comandos.
+        env:
+          SMOKE_URL: ${{ inputs.url || github.event.deployment_status.environment_url }}
+          EXPECT_MODE: ${{ inputs.expect_mode || 'supabase' }}
+        run: node scripts/smoke.js "$SMOKE_URL" --expect-mode "$EXPECT_MODE"

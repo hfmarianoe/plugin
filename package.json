@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vercel dev",
     "test": "node --test",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=api/**/*.js --test-coverage-lines=95 --test-coverage-branches=90"
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=api/**/*.js --test-coverage-lines=95 --test-coverage-branches=90",
+    "smoke": "node scripts/smoke.js"
   }
 }
