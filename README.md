@@ -33,6 +33,11 @@ npx playwright test
 ### CI
 `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`: las pruebas del API con umbral de cobertura (`npm run test:coverage`) y las pruebas E2E con Playwright. Si falla E2E se sube el reporte como artefacto.
 
+Las acciones de GitHub están fijadas por hash de commit (con la versión como comentario), no por etiqueta: una etiqueta como `@v7` puede moverse, un hash no. Para actualizar una, busca el commit de la versión nueva y cambia hash y comentario a la vez:
+```
+git ls-remote --tags https://github.com/actions/checkout.git 'refs/tags/v7*'
+```
+
 ### Prueba de humo (después del despliegue)
 `scripts/smoke.js` comprueba un sitio desplegado sin dejar notas reales: carga de la página, lectura de la API en el modo esperado (`supabase` en producción), ordenamiento y forma de las notas, tiempo de respuesta, rechazo de POST sin JSON (415) y de notas vacías (400), descarte de bots por honeypot (verificando que no se guardó) y 405 con `Allow`. Reintenta ante errores de red y 502/503/504, y avisa si el sitio está protegido por Vercel Authentication.
 
