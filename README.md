@@ -11,3 +11,8 @@ Sin variables de entorno funciona con memoria (se reinicia entre invocaciones). 
 
 ## Despliegue
 Importa el repo en Vercel (sin framework). `vercel.json` ya apunta a `public/`. Local: `npx vercel dev`.
+
+## Pruebas
+- `npm test`: suite de `node:test` (API en modo memoria, con Supabase simulado y en producción).
+- `npm run test:coverage`: igual, pero falla si `api/notes.js` baja de 95 % de líneas o 90 % de ramas.
+- Los helpers para llamar al handler están en `testing/` (fuera de `test/` porque `node --test` ejecuta todo lo que haya en `test/`).
