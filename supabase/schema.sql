@@ -27,7 +27,6 @@ begin
 end;
 $$;
 
-drop trigger if exists notes_rate_limit on public.notes;
-create trigger notes_rate_limit
+create or replace trigger notes_rate_limit
   before insert on public.notes
   for each row execute function public.notes_rate_limit();
