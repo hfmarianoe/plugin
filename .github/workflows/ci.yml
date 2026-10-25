@@ -39,9 +39,12 @@ jobs:
       - name: Instalar dependencias
         working-directory: e2e
         run: npm ci
+      # Sin --with-deps: las librerías que Chromium necesita ya vienen en el runner, y --with-deps bajaba por apt
+      # ~25 MB de tipografías y xvfb que no hacen falta en modo headless. Cuando el espejo de Ubuntu iba lento
+      # (76 kB/s) ese paso tardaba más de 5 min; la descarga de Chromium en sí tarda ~3 s y no necesita caché.
       - name: Instalar Chromium
         working-directory: e2e
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       - name: Ejecutar pruebas
         working-directory: e2e
         run: npx playwright test
