@@ -1,11 +1,10 @@
 name: Smoke
 
 # Corre la prueba de humo contra el sitio desplegado:
-# - automáticamente cuando Vercel marca como correcto el despliegue del último commit de main
+# - automáticamente cuando Vercel marca como correcto el despliegue de un commit que está en main
 #   (Vercel publica un estado de commit "Vercel" = success; no crea Deployments de GitHub,
 #   por eso no se usa deployment_status);
 # - a mano desde Actions > Smoke > Run workflow (por ejemplo contra un preview).
-# Nota: los workflows disparados por `status` se toman de la rama por defecto (main).
 on:
   status:
   workflow_dispatch:
@@ -29,10 +28,11 @@ concurrency:
 jobs:
   smoke:
     name: Prueba de humo
-    # En `status`, github.sha es el último commit de la rama por defecto: solo se prueba el despliegue de ese commit.
+    # En `status`, github.sha es el commit del propio estado (no el de main), así que se filtra por las ramas que
+    # contienen ese commit: los previews de PR (rama de feature) se omiten y solo se prueba el despliegue de main.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.state == 'success' && github.event.context == 'Vercel' && github.event.sha == github.sha)
+      (github.event.state == 'success' && github.event.context == 'Vercel' && contains(github.event.branches.*.name, 'main'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
