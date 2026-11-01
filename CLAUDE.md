@@ -12,7 +12,6 @@
 | Proveedor | Modelo | Resultado |
 |---|---|---|
 | OrcaRouter | `orcarouter/auto` | OK (base) |
-| OrcaRouter | `orcarouter/free` | Sin acceso: la clave no tiene permiso (403) |
 | cheaperinference | `beam-free` | OK, con al menos 400 tokens de salida (con 20 devuelve contenido vacío) |
 | OpenRouter | `recursive/flint-v1.0:free` | No disponible: sin upstreams (503) |
 
